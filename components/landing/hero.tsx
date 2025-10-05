@@ -36,7 +36,7 @@ export default function Hero() {
 						Find Jobs
 					</Link>
 					<Link
-						href='/signup'
+						href='/register'
 						className='px-7 py-2.5 rounded-full border border-primary/60 text-primary hover:bg-primary/5 text-lg'
 					>
 						Get Started

@@ -7,11 +7,7 @@ function Navbar({}: Props) {
 	return (
 		<nav className='fixed top-0 left-0 right-0 z-50 bg-transparent'>
 			<div className='container mx-auto flex items-center justify-between px-6 py-4'>
-				<div className='flex items-center gap-2'>
-					<Logo className='size-7' />
-
-					<span className="text-xl font-['outfit']"> /Career.bridge</span>
-				</div>
+				<Logo className='size-7' />
 
 				<div className='flex items-center gap-8'>
 					<Link
@@ -30,7 +26,7 @@ function Navbar({}: Props) {
 						Log in
 					</Link>
 					<Link
-						href='/signup'
+						href='/register'
 						className='px-4 py-2 rounded-full bg-primary text-white hover:bg-primary/90 font-light'
 					>
 						Sign up
