@@ -1,12 +1,17 @@
 'use server';
 
-import { db } from '@/db';
-import { users, recruiterProfiles } from '@/db/schema';
-import { hashPassword, verifyPassword } from '@/lib/auth/password';
-import { generateToken, setAuthCookie, removeAuthCookie, getCurrentUserFromToken } from '@/lib/auth/jwt';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { db } from '@/db';
+import { recruiterProfiles, users } from '@/db/schema';
+import {
+	generateToken,
+	getCurrentUserFromToken,
+	removeAuthCookie,
+	setAuthCookie,
+} from '@/lib/auth/jwt';
+import { hashPassword, verifyPassword } from '@/lib/auth/password';
 
 export interface AuthResponse {
 	success: boolean;
@@ -201,7 +206,10 @@ export async function loginUser(data: { email: string; password: string }): Prom
 /**
  * Login recruiter
  */
-export async function loginRecruiter(data: { email: string; password: string }): Promise<AuthResponse> {
+export async function loginRecruiter(data: {
+	email: string;
+	password: string;
+}): Promise<AuthResponse> {
 	try {
 		// Find user
 		const user = await db.query.users.findFirst({
@@ -292,6 +300,7 @@ export async function getCurrentUser() {
 	}
 
 	// Return user without password
+	// biome-ignore lint/correctness/noUnusedVariables: intentionally destructuring to remove password
 	const { password, ...userWithoutPassword } = user;
 	return userWithoutPassword;
 }
@@ -325,4 +334,3 @@ export async function requireRecruiter() {
 	}
 	return user;
 }
-

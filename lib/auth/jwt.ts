@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key');
@@ -30,7 +30,8 @@ export async function generateToken(payload: JWTPayload): Promise<string> {
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
 	try {
 		const { payload } = await jwtVerify(token, secret);
-		return payload as JWTPayload;
+		// Cast to unknown first to avoid type error
+		return payload as unknown as JWTPayload;
 	} catch (error) {
 		console.error('Token verification failed:', error);
 		return null;
@@ -76,4 +77,3 @@ export async function getCurrentUserFromToken(): Promise<JWTPayload | null> {
 	if (!token) return null;
 	return verifyToken(token);
 }
-

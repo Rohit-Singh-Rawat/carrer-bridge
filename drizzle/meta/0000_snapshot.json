@@ -73,12 +73,8 @@
           "name": "applications_job_id_jobs_id_fk",
           "tableFrom": "applications",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -86,12 +82,8 @@
           "name": "applications_user_id_users_id_fk",
           "tableFrom": "applications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -216,12 +208,8 @@
           "name": "jobs_recruiter_id_users_id_fk",
           "tableFrom": "jobs",
           "tableTo": "users",
-          "columnsFrom": [
-            "recruiter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recruiter_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -313,12 +301,8 @@
           "name": "recruiter_profiles_user_id_users_id_fk",
           "tableFrom": "recruiter_profiles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -328,9 +312,7 @@
         "recruiter_profiles_user_id_unique": {
           "name": "recruiter_profiles_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -396,9 +378,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -410,49 +390,27 @@
     "public.application_status": {
       "name": "application_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "reviewed",
-        "accepted",
-        "rejected"
-      ]
+      "values": ["pending", "reviewed", "accepted", "rejected"]
     },
     "public.experience_level": {
       "name": "experience_level",
       "schema": "public",
-      "values": [
-        "entry",
-        "mid",
-        "senior",
-        "lead"
-      ]
+      "values": ["entry", "mid", "senior", "lead"]
     },
     "public.job_status": {
       "name": "job_status",
       "schema": "public",
-      "values": [
-        "active",
-        "closed",
-        "draft"
-      ]
+      "values": ["active", "closed", "draft"]
     },
     "public.job_type": {
       "name": "job_type",
       "schema": "public",
-      "values": [
-        "full-time",
-        "part-time",
-        "contract",
-        "internship"
-      ]
+      "values": ["full-time", "part-time", "contract", "internship"]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "user",
-        "recruiter"
-      ]
+      "values": ["user", "recruiter"]
     }
   },
   "schemas": {},

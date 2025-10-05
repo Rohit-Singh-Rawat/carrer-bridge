@@ -30,7 +30,7 @@ export default function Hero() {
 
 				<div className='flex flex-wrap items-center justify-center gap-4 mt-12'>
 					<Link
-						href='/jobs'
+						href='/dashboard/jobs'
 						className='px-7 py-2.5 rounded-full bg-primary text-white hover:bg-primary/90 text-lg border border-primary'
 					>
 						Find Jobs

@@ -1,5 +1,8 @@
-import { getCurrentUser, logout } from '@/actions/auth';
-import { Button } from '@/components/ui/button';
+import { getCurrentUser } from '@/actions/auth';
+import { getJobs } from '@/actions/jobs';
+import { CreateJobDialog } from '@/components/jobs/create-job-dialog';
+import { EmptyJobsState } from '@/components/jobs/empty-jobs-state';
+import { JobCard } from '@/components/jobs/job-card';
 
 export default async function JobsPage() {
 	const user = await getCurrentUser();
@@ -8,46 +11,45 @@ export default async function JobsPage() {
 		return null;
 	}
 
-	return (
-		<div className='min-h-screen p-8'>
-			<div className='max-w-7xl mx-auto'>
-				<div className='flex items-center justify-between mb-8'>
-					<div>
-						<h1 className="text-4xl font-['outfit'] font-normal mb-2">
-							Welcome back, {user.fullName}!
-						</h1>
-						<p className="text-muted-foreground font-['outfit'] font-light">
-							{user.role === 'recruiter' ? 'Manage your job postings' : 'Find your dream job'}
-						</p>
-					</div>
-					<form action={logout}>
-						<Button
-							type='submit'
-							variant='outline'
-							className="rounded-full font-['outfit']"
-						>
-							Logout
-						</Button>
-					</form>
-				</div>
+	const jobsResult = await getJobs();
+	const jobs = jobsResult.success ? jobsResult.jobs : [];
 
-				<div className='grid gap-6'>
-					<div className='p-6 rounded-2xl border bg-card'>
-						<h2 className="text-2xl font-['outfit'] font-normal mb-4">Jobs Dashboard</h2>
-						<p className="text-muted-foreground font-['outfit'] font-light">
-							Your jobs dashboard is ready! You're logged in as a {user.role}.
+	return (
+		<div className='space-y-8'>
+			<div className='flex items-start justify-between gap-4 flex-wrap'>
+				<div className='space-y-2'>
+					<h1 className="text-4xl font-['outfit'] font-bold tracking-tight">
+						{user.role === 'recruiter' ? 'Manage Jobs' : 'Browse Jobs'}
+					</h1>
+					<p className="text-muted-foreground font-['outfit'] text-lg">
+						{user.role === 'recruiter'
+							? 'Create and manage your job postings'
+							: 'Discover opportunities that match your skills'}
+					</p>
+				</div>
+				{user.role === 'recruiter' && <CreateJobDialog />}
+			</div>
+
+			{jobs.length === 0 ? (
+				<EmptyJobsState isRecruiter={user.role === 'recruiter'} />
+			) : (
+				<div className='space-y-4'>
+					<div className='flex items-center justify-between px-1'>
+						<p className="text-sm text-muted-foreground font-['outfit']">
+							{jobs.length} {jobs.length === 1 ? 'opportunity' : 'opportunities'} available
 						</p>
-						{user.role === 'recruiter' && user.recruiterProfile && (
-							<div className='mt-4'>
-								<p className="text-sm text-muted-foreground font-['outfit']">
-									Company: {user.recruiterProfile.companyName}
-								</p>
-							</div>
-						)}
+					</div>
+					<div className='space-y-4'>
+						{jobs.map((job) => (
+							<JobCard
+								key={job.id}
+								job={job}
+								isRecruiter={user.role === 'recruiter'}
+							/>
+						))}
 					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }
-

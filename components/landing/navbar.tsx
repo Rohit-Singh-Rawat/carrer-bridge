@@ -11,7 +11,7 @@ function Navbar({}: Props) {
 
 				<div className='flex items-center gap-8'>
 					<Link
-						href='/jobs'
+						href='/dashboard/jobs'
 						className='hover:text-primary/80 font-light'
 					>
 						Find Jobs
