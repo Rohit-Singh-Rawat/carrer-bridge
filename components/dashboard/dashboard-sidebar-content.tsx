@@ -1,38 +1,74 @@
-"use client";
+'use client';
 
-import { JobSearchIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { JobSearchIcon, File01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+} from '@/components/ui/sidebar';
 
-export function DashboardSidebarContent() {
-  const pathname = usePathname();
+interface DashboardSidebarContentProps {
+	userRole: 'user' | 'recruiter';
+}
 
-  return (
-    <SidebarGroup>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === "/dashboard/jobs"}
-              className="text-primary-foreground hover:bg-primary-foreground/10 data-[active=true]:bg-primary-foreground/20 data-[active=true]:font-semibold"
-            >
-              <Link href="/dashboard/jobs">
-                <HugeiconsIcon icon={JobSearchIcon} className="size-4" />
-                <span>Jobs</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
+const menuItems = {
+	user: [
+		{
+			href: '/dashboard/jobs',
+			icon: JobSearchIcon,
+			label: 'Jobs',
+		},
+		{
+			href: '/dashboard/resumes',
+			icon: File01Icon,
+			label: 'Resumes',
+		},
+	],
+	recruiter: [
+		{
+			href: '/dashboard/jobs',
+			icon: JobSearchIcon,
+			label: 'Jobs',
+		},
+	],
+};
+
+export function DashboardSidebarContent({ userRole }: DashboardSidebarContentProps) {
+	const pathname = usePathname();
+
+	return (
+		<SidebarGroup>
+			<SidebarGroupContent>
+				<SidebarMenu>
+					{menuItems[userRole].map((item) => (
+						<SidebarMenuItem key={item.href}>
+							<SidebarMenuButton
+								asChild
+								isActive={
+									item.href === '/dashboard/jobs'
+										? pathname === item.href
+										: pathname.startsWith(item.href)
+								}
+								className='text-primary-foreground data-[active=true]:text-black hover:bg-primary-foreground/10 data-[active=true]:bg-ocean-mist/90 data-[active=true]:font-medium'
+							>
+								<Link href={item.href}>
+									<HugeiconsIcon
+										color='currentColor'
+										icon={item.icon}
+										className='size-4'
+									/>
+									<span>{item.label}</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+					))}
+				</SidebarMenu>
+			</SidebarGroupContent>
+		</SidebarGroup>
+	);
 }

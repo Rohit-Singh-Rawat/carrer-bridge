@@ -18,7 +18,7 @@ export default async function JobsPage() {
 		<div className='space-y-8'>
 			<div className='flex items-start justify-between gap-4 flex-wrap'>
 				<div className='space-y-2'>
-					<h1 className="text-4xl font-['outfit'] font-bold tracking-tight">
+					<h1 className="text-4xl font-['outfit'] font-medium tracking-tight">
 						{user.role === 'recruiter' ? 'Manage Jobs' : 'Browse Jobs'}
 					</h1>
 					<p className="text-muted-foreground font-['outfit'] text-lg">

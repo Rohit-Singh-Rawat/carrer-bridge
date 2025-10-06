@@ -25,13 +25,15 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { cookies } from 'next/headers';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
 	// Require authentication for all dashboard routes
 	const user = await requireAuth();
-
+	const cookieStore = await cookies();
+	const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
 	return (
-		<SidebarProvider>
+		<SidebarProvider defaultOpen={defaultOpen}>
 			<Sidebar
 				variant='inset'
 				collapsible='icon'
@@ -50,7 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 					</div>
 				</SidebarHeader>
 				<SidebarContent className='bg-primary'>
-					<DashboardSidebarContent />
+					<DashboardSidebarContent userRole={user.role} />
 				</SidebarContent>
 				<SidebarFooter className='border-t border-primary-foreground/20 bg-primary'>
 					<SidebarMenu>
