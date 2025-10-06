@@ -12,7 +12,6 @@ import type { Resume } from '@/db/schema';
 import { File01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { EyeIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -28,6 +27,8 @@ export function ResumeCard({ resume, onEdit, onDelete }: ResumeCardProps) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [imageLoaded, setImageLoaded] = useState(false);
+	const [imageError, setImageError] = useState(false);
 
 	const handleDelete = () => {
 		startTransition(async () => {
@@ -41,26 +42,47 @@ export function ResumeCard({ resume, onEdit, onDelete }: ResumeCardProps) {
 		});
 	};
 
+	// Check if we have a real thumbnail (not a placeholder)
+	const hasRealThumbnail = resume.thumbnailUrl && !resume.thumbnailUrl.startsWith('/');
+
 	return (
-		<div className='group relative overflow-hidden rounded-xl border bg-card transition-all '>
+		<div className='group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg'>
 			{/* Thumbnail */}
 			<Link
 				href={`/dashboard/resumes/${resume.slug}`}
 				className='block'
 			>
-				<div className='relative aspect-[5/6] w-full overflow-hidden bg-muted'>
-					<Image
-						src={resume.thumbnailUrl}
-						alt={resume.title}
-						fill
-						className='object-cover transition-transform group-hover:scale-105'
-					/>
-					<div className='absolute inset-0 flex items-center justify-center'>
-						<HugeiconsIcon
-							icon={File01Icon}
-							size={48}
-						/>
-					</div>
+				<div className='relative aspect-[5/6] w-full overflow-hidden bg-white border-b'>
+					{hasRealThumbnail && !imageError ? (
+						<>
+							{/* Loading skeleton */}
+							{!imageLoaded && (
+								<div className='absolute inset-0 flex items-center justify-center bg-muted'>
+									<div className='h-8 w-8 animate-spin rounded-full border-4 border-muted-foreground/20 border-t-muted-foreground/60' />
+								</div>
+							)}
+
+							{/* Thumbnail Image */}
+							<img
+								src={resume.thumbnailUrl}
+								alt={resume.title}
+								className={`h-full w-full object-contain p-2 transition-all duration-300 ${
+									imageLoaded ? 'opacity-100' : 'opacity-0'
+								} group-hover:scale-[1.02]`}
+								onLoad={() => setImageLoaded(true)}
+								onError={() => setImageError(true)}
+							/>
+						</>
+					) : (
+						/* Fallback Icon */
+						<div className='flex h-full items-center justify-center bg-muted transition-colors group-hover:bg-muted/80'>
+							<HugeiconsIcon
+								icon={File01Icon}
+								size={96}
+								className='text-muted-foreground'
+							/>
+						</div>
+					)}
 				</div>
 			</Link>
 

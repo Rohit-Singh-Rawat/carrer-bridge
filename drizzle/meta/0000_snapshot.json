@@ -1,5 +1,5 @@
 {
-  "id": "0d7776bf-23a4-44fd-9bbd-cd57e91d440e",
+  "id": "746fd388-a26d-439b-a91a-59545311a6ef",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -27,17 +27,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "cover_letter": {
-          "name": "cover_letter",
-          "type": "text",
+        "resume_id": {
+          "name": "resume_id",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
-        },
-        "resume_url": {
-          "name": "resume_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -73,8 +67,12 @@
           "name": "applications_job_id_jobs_id_fk",
           "tableFrom": "applications",
           "tableTo": "jobs",
-          "columnsFrom": ["job_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -82,8 +80,25 @@
           "name": "applications_user_id_users_id_fk",
           "tableFrom": "applications",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "applications_resume_id_resumes_id_fk": {
+          "name": "applications_resume_id_resumes_id_fk",
+          "tableFrom": "applications",
+          "tableTo": "resumes",
+          "columnsFrom": [
+            "resume_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -208,8 +223,12 @@
           "name": "jobs_recruiter_id_users_id_fk",
           "tableFrom": "jobs",
           "tableTo": "users",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -301,8 +320,12 @@
           "name": "recruiter_profiles_user_id_users_id_fk",
           "tableFrom": "recruiter_profiles",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -312,7 +335,101 @@
         "recruiter_profiles_user_id_unique": {
           "name": "recruiter_profiles_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.resumes": {
+      "name": "resumes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "thumbnail_url": {
+          "name": "thumbnail_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "resumes_user_id_users_id_fk": {
+          "name": "resumes_user_id_users_id_fk",
+          "tableFrom": "resumes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "resumes_slug_unique": {
+          "name": "resumes_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
         }
       },
       "policies": {},
@@ -378,7 +495,9 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -390,27 +509,50 @@
     "public.application_status": {
       "name": "application_status",
       "schema": "public",
-      "values": ["pending", "reviewed", "accepted", "rejected"]
+      "values": [
+        "pending",
+        "reviewed",
+        "in_progress",
+        "accepted",
+        "rejected"
+      ]
     },
     "public.experience_level": {
       "name": "experience_level",
       "schema": "public",
-      "values": ["entry", "mid", "senior", "lead"]
+      "values": [
+        "entry",
+        "mid",
+        "senior",
+        "lead"
+      ]
     },
     "public.job_status": {
       "name": "job_status",
       "schema": "public",
-      "values": ["active", "closed", "draft"]
+      "values": [
+        "active",
+        "closed",
+        "draft"
+      ]
     },
     "public.job_type": {
       "name": "job_type",
       "schema": "public",
-      "values": ["full-time", "part-time", "contract", "internship"]
+      "values": [
+        "full-time",
+        "part-time",
+        "contract",
+        "internship"
+      ]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": ["user", "recruiter"]
+      "values": [
+        "user",
+        "recruiter"
+      ]
     }
   },
   "schemas": {},

@@ -28,9 +28,10 @@ interface JobCardProps {
 		} | null;
 	};
 	isRecruiter?: boolean;
+	applicationCount?: number;
 }
 
-export function JobCard({ job, isRecruiter = false }: JobCardProps) {
+export function JobCard({ job, isRecruiter = false, applicationCount = 0 }: JobCardProps) {
 	const [isActive, setIsActive] = useState(job.status === 'active');
 	const [isUpdating, setIsUpdating] = useState(false);
 
@@ -252,20 +253,37 @@ export function JobCard({ job, isRecruiter = false }: JobCardProps) {
 
 			{/* Recruiter Controls */}
 			{isRecruiter && (
-				<div className='mt-5 pt-5 border-t border-border/50 flex items-center justify-between'>
-					<Label
-						htmlFor={`status-${job.id}`}
-						className="text-sm font-medium cursor-pointer font-['outfit'] text-muted-foreground"
-					>
-						{isActive ? 'Job is Live' : 'Activate Job'}
-					</Label>
-					<Switch
-						id={`status-${job.id}`}
-						checked={isActive}
-						onCheckedChange={handleStatusToggle}
-						disabled={isUpdating}
+				<div className='mt-5 pt-5 border-t border-border/50 space-y-3'>
+					<div className='flex items-center justify-between'>
+						<Label
+							htmlFor={`status-${job.id}`}
+							className="text-sm font-medium cursor-pointer font-['outfit'] text-muted-foreground"
+						>
+							{isActive ? 'Job is Live' : 'Activate Job'}
+						</Label>
+						<Switch
+							id={`status-${job.id}`}
+							checked={isActive}
+							onCheckedChange={handleStatusToggle}
+							disabled={isUpdating}
+							onClick={(e) => e.stopPropagation()}
+						/>
+					</div>
+					<Link
+						href={`/dashboard/jobs/${job.id}/applications`}
 						onClick={(e) => e.stopPropagation()}
-					/>
+						className='flex items-center justify-between px-3 py-2 rounded-lg bg-ocean-mist/40 hover:bg-ocean-breeze/40 transition-colors group/app'
+					>
+						<span className="text-sm font-['outfit'] text-ocean-wave">
+							{applicationCount === 0
+								? 'No applications yet'
+								: `${applicationCount} application${applicationCount !== 1 ? 's' : ''}`}
+						</span>
+						<HugeiconsIcon
+							icon={ArrowRight01Icon}
+							className='size-4 text-ocean-wave group-hover/app:translate-x-1 transition-transform'
+						/>
+					</Link>
 				</div>
 			)}
 		</div>

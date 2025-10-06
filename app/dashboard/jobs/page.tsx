@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/actions/auth';
 import { getJobs } from '@/actions/jobs';
+import { getJobApplicationCount } from '@/actions/applications';
 import { CreateJobDialog } from '@/components/jobs/create-job-dialog';
 import { EmptyJobsState } from '@/components/jobs/empty-jobs-state';
 import { JobCard } from '@/components/jobs/job-card';
@@ -13,6 +14,15 @@ export default async function JobsPage() {
 
 	const jobsResult = await getJobs();
 	const jobs = jobsResult.success ? jobsResult.jobs : [];
+
+	// Get application counts for recruiters
+	let applicationCounts: Record<string, number> = {};
+	if (user.role === 'recruiter' && jobs.length > 0) {
+		const counts = await Promise.all(jobs.map((job) => getJobApplicationCount(job.id)));
+		jobs.forEach((job, index) => {
+			applicationCounts[job.id] = counts[index];
+		});
+	}
 
 	return (
 		<div className='space-y-8'>
@@ -45,6 +55,7 @@ export default async function JobsPage() {
 								key={job.id}
 								job={job}
 								isRecruiter={user.role === 'recruiter'}
+								applicationCount={applicationCounts[job.id] || 0}
 							/>
 						))}
 					</div>

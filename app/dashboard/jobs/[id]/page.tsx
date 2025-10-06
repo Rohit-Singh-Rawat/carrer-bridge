@@ -13,10 +13,12 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/actions/auth';
 import { getJobById } from '@/actions/jobs';
+import { getUserResumes } from '@/actions/resumes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { JobActions } from '@/components/jobs/job-actions';
+import { ApplyToJobDialog } from '@/components/jobs/apply-to-job-dialog';
 
 interface JobDetailPageProps {
 	params: Promise<{ id: string }>;
@@ -38,6 +40,15 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 	const job = jobResult.job;
 	const _isRecruiter = user.role === 'recruiter';
 	const isOwner = job.recruiterId === user.id;
+
+	// Get user's resumes if they're a candidate
+	let userResumes: any[] = [];
+	if (user.role === 'user' && !isOwner) {
+		const resumesResult = await getUserResumes();
+		if (resumesResult.success && resumesResult.resumes) {
+			userResumes = resumesResult.resumes;
+		}
+	}
 
 	const formatSalary = (min?: number | null, max?: number | null) => {
 		if (!min && !max) return 'Competitive Salary';
@@ -148,7 +159,26 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 				</div>
 
 				{/* Action Buttons */}
-				{!isOwner && job.status === 'active' && <JobActions />}
+				{!isOwner && job.status === 'active' && (
+					<div className='flex gap-3'>
+						<ApplyToJobDialog
+							jobId={job.id}
+							jobTitle={job.title}
+							resumes={userResumes}
+						/>
+					</div>
+				)}
+				{isOwner && (
+					<Link href={`/dashboard/jobs/${job.id}/applications`}>
+						<Button className="gap-2 font-['outfit'] bg-ocean-wave hover:bg-deep-sea text-white">
+							View Applications
+							<HugeiconsIcon
+								icon={ArrowRight01Icon}
+								className='size-4'
+							/>
+						</Button>
+					</Link>
+				)}
 			</div>
 
 			<Separator />

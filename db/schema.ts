@@ -9,6 +9,7 @@ export const jobStatusEnum = pgEnum('job_status', ['active', 'closed', 'draft'])
 export const applicationStatusEnum = pgEnum('application_status', [
 	'pending',
 	'reviewed',
+	'in_progress',
 	'accepted',
 	'rejected',
 ]);
@@ -73,8 +74,9 @@ export const applications = pgTable('applications', {
 	userId: uuid('user_id')
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
-	coverLetter: text('cover_letter'),
-	resumeUrl: text('resume_url'),
+	resumeId: uuid('resume_id')
+		.notNull()
+		.references(() => resumes.id, { onDelete: 'cascade' }),
 	status: applicationStatusEnum('status').notNull().default('pending'),
 	appliedAt: timestamp('applied_at').defaultNow().notNull(),
 	reviewedAt: timestamp('reviewed_at'),
@@ -130,6 +132,10 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 	user: one(users, {
 		fields: [applications.userId],
 		references: [users.id],
+	}),
+	resume: one(resumes, {
+		fields: [applications.resumeId],
+		references: [resumes.id],
 	}),
 }));
 

@@ -3,11 +3,9 @@
 import { db } from '@/db';
 import { resumes, type Resume } from '@/db/schema';
 import { getCurrentUserFromToken } from '@/lib/auth/jwt';
-import { getKeyFromUrl, uploadToR2 } from '@/lib/r2/upload';
+import { getKeyFromUrl, getUploadPresignedUrl, getPublicUrl } from '@/lib/r2/upload';
 import { generateUniqueSlug } from '@/lib/utils/slug';
 import { and, eq } from 'drizzle-orm';
-import { pdf } from 'pdf-to-img';
-import sharp from 'sharp';
 
 interface ResumeResponse {
 	success: boolean;
@@ -16,61 +14,22 @@ interface ResumeResponse {
 	resumes?: Resume[];
 }
 
-/**
- * Generate a thumbnail from a PDF file
- */
-async function generatePdfThumbnail(
-	pdfBuffer: Buffer
-): Promise<{ buffer: Buffer; width: number; height: number }> {
-	try {
-		// Convert PDF to image
-		const document = await pdf(pdfBuffer, { scale: 2.0 });
-
-		// Get first page
-		const firstPage = await document.getPage(1);
-
-		if (!firstPage) {
-			throw new Error('Failed to get first page');
-		}
-
-		// Resize to thumbnail size with sharp
-		const thumbnail = await sharp(firstPage)
-			.resize(400, null, {
-				fit: 'inside',
-				withoutEnlargement: true,
-			})
-			.png({ quality: 90, compressionLevel: 9 })
-			.toBuffer();
-
-		const metadata = await sharp(thumbnail).metadata();
-
-		return {
-			buffer: thumbnail,
-			width: metadata.width || 400,
-			height: metadata.height || 560,
-		};
-	} catch (error) {
-		console.error('Error generating PDF thumbnail:', error);
-		// Return a default gray thumbnail on error
-		const defaultThumbnail = await sharp({
-			create: {
-				width: 400,
-				height: 560,
-				channels: 4,
-				background: { r: 240, g: 240, b: 240, alpha: 1 },
-			},
-		})
-			.png()
-			.toBuffer();
-
-		return { buffer: defaultThumbnail, width: 400, height: 560 };
-	}
+interface PresignedUrlsResponse {
+	success: boolean;
+	message?: string;
+	data?: {
+		slug: string;
+		pdfUrl: string;
+		thumbnailUrl: string;
+		pdfKey: string;
+		thumbnailKey: string;
+	};
 }
 
 /**
- * Create a new resume
+ * Get presigned URLs for uploading resume and thumbnail
  */
-export async function createResume(formData: FormData): Promise<ResumeResponse> {
+export async function getResumeUploadUrls(title: string): Promise<PresignedUrlsResponse> {
 	try {
 		// Verify user is authenticated and is a candidate (user role)
 		const user = await getCurrentUserFromToken();
@@ -81,48 +40,73 @@ export async function createResume(formData: FormData): Promise<ResumeResponse> 
 			};
 		}
 
-		const title = formData.get('title') as string;
-		const description = (formData.get('description') as string) || null;
-		const file = formData.get('file') as File;
-
-		if (!title || !file) {
+		if (!title) {
 			return {
 				success: false,
-				message: 'Title and file are required',
-			};
-		}
-
-		// Validate file type
-		if (file.type !== 'application/pdf') {
-			return {
-				success: false,
-				message: 'Only PDF files are allowed',
+				message: 'Title is required',
 			};
 		}
 
 		// Generate unique slug
 		const slug = await generateUniqueSlug(title, user.userId);
 
-		// Convert file to buffer
-		const fileBuffer = Buffer.from(await file.arrayBuffer());
-
-		// Upload PDF to R2
+		// Generate keys for PDF and thumbnail
 		const pdfKey = `resumes/${user.userId}/${slug}.pdf`;
-		const fileUrl = await uploadToR2(pdfKey, fileBuffer, 'application/pdf');
+		const thumbnailKey = `resumes/${user.userId}/${slug}-thumbnail.png`;
 
-		// Generate and upload thumbnail
-		const thumbnail = await generatePdfThumbnail(fileBuffer);
-		const thumbnailKey = `resumes/${user.userId}/${slug}-thumb.png`;
-		const thumbnailUrl = await uploadToR2(thumbnailKey, thumbnail.buffer, 'image/png');
+		// Get presigned URLs
+		const pdfUrl = await getUploadPresignedUrl(pdfKey, 'application/pdf');
+		const thumbnailUrl = await getUploadPresignedUrl(thumbnailKey, 'image/png');
+
+		return {
+			success: true,
+			data: {
+				slug,
+				pdfUrl,
+				thumbnailUrl,
+				pdfKey,
+				thumbnailKey,
+			},
+		};
+	} catch (error) {
+		console.error('Error getting presigned URLs:', error);
+		return {
+			success: false,
+			message: 'Failed to generate upload URLs. Please try again.',
+		};
+	}
+}
+
+/**
+ * Save resume metadata after client-side upload
+ */
+export async function saveResumeMetadata(data: {
+	slug: string;
+	title: string;
+	description?: string;
+	pdfKey: string;
+	thumbnailKey: string;
+}): Promise<ResumeResponse> {
+	try {
+		const user = await getCurrentUserFromToken();
+		if (!user || user.role !== 'user') {
+			return {
+				success: false,
+				message: 'Unauthorized',
+			};
+		}
+
+		const fileUrl = getPublicUrl(data.pdfKey);
+		const thumbnailUrl = getPublicUrl(data.thumbnailKey);
 
 		// Create resume record in database
 		const [newResume] = await db
 			.insert(resumes)
 			.values({
 				userId: user.userId,
-				slug,
-				title,
-				description,
+				slug: data.slug,
+				title: data.title,
+				description: data.description || null,
 				fileUrl,
 				thumbnailUrl,
 			})
@@ -134,10 +118,10 @@ export async function createResume(formData: FormData): Promise<ResumeResponse> 
 			resume: newResume,
 		};
 	} catch (error) {
-		console.error('Error creating resume:', error);
+		console.error('Error saving resume metadata:', error);
 		return {
 			success: false,
-			message: 'Failed to upload resume. Please try again.',
+			message: 'Failed to save resume. Please try again.',
 		};
 	}
 }
@@ -291,7 +275,11 @@ export async function deleteResume(id: string): Promise<ResumeResponse> {
 		try {
 			const { deleteFromR2 } = await import('@/lib/r2/upload');
 			await deleteFromR2(getKeyFromUrl(existingResume.fileUrl));
-			await deleteFromR2(getKeyFromUrl(existingResume.thumbnailUrl));
+
+			// Delete thumbnail if it's not a placeholder
+			if (existingResume.thumbnailUrl && !existingResume.thumbnailUrl.startsWith('/')) {
+				await deleteFromR2(getKeyFromUrl(existingResume.thumbnailUrl));
+			}
 		} catch (error) {
 			console.error('Error deleting files from R2:', error);
 			// Continue with database deletion even if R2 deletion fails
