@@ -78,6 +78,7 @@ export function usePdfPreview({ file, scale = 1.5 }: UsePdfPreviewOptions): PdfP
 				const renderContext = {
 					canvasContext: context,
 					viewport: viewport,
+					canvas: canvas
 				};
 
 				await page.render(renderContext).promise;
