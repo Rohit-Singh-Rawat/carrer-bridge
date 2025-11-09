@@ -13,7 +13,7 @@ const protectedRoutes = ["/dashboard"];
 // Routes that should redirect to dashboard if authenticated
 const authRoutes = ["/login", "/register"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get(TOKEN_NAME)?.value;
   const { pathname } = request.nextUrl;
 
