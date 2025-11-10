@@ -13,6 +13,7 @@ export const env = createEnv({
 		R2_ACCESS_KEYID: z.string().min(1),
 		R2_SECRET_ACCEESS_KEY: z.string().min(1),
 		R2_BUCKET_NAME: z.string().min(1),
+		GOOGLE_GEMINI_API_KEY: z.string().min(1),
 		NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 	},
 
@@ -24,6 +25,8 @@ export const env = createEnv({
 	client: {
 		NEXT_PUBLIC_APP_URL: z.string().url(),
 		NEXT_PUBLIC_R2_URL: z.string().url(),
+		NEXT_PUBLIC_INTERVIEW_MAX_DURATION: z.string().default('300'),
+		NEXT_PUBLIC_SNAPSHOT_INTERVAL: z.string().default('10'),
 	},
 
 	/**
@@ -37,9 +40,12 @@ export const env = createEnv({
 		R2_ACCESS_KEYID: process.env.R2_ACCESS_KEYID,
 		R2_SECRET_ACCEESS_KEY: process.env.R2_SECRET_ACCEESS_KEY,
 		R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+		GOOGLE_GEMINI_API_KEY: process.env.GOOGLE_GEMINI_API_KEY,
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 		NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
+		NEXT_PUBLIC_INTERVIEW_MAX_DURATION: process.env.NEXT_PUBLIC_INTERVIEW_MAX_DURATION,
+		NEXT_PUBLIC_SNAPSHOT_INTERVAL: process.env.NEXT_PUBLIC_SNAPSHOT_INTERVAL,
 	},
 
 	/**

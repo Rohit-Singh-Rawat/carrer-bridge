@@ -13,6 +13,15 @@ export const applicationStatusEnum = pgEnum('application_status', [
 	'accepted',
 	'rejected',
 ]);
+export const interviewStatusEnum = pgEnum('interview_status', [
+	'scheduled',
+	'in_progress',
+	'completed',
+	'cancelled',
+]);
+export const messageRoleEnum = pgEnum('message_role', ['user', 'assistant']);
+export const messageTypeEnum = pgEnum('message_type', ['text', 'mcq']);
+export const interviewPhaseEnum = pgEnum('interview_phase', ['introduction', 'questions', 'closing']);
 
 // Users table (for both regular users and recruiters)
 export const users = pgTable('users', {
@@ -80,7 +89,9 @@ export const applications = pgTable('applications', {
 	status: applicationStatusEnum('status').notNull().default('pending'),
 	appliedAt: timestamp('applied_at').defaultNow().notNull(),
 	reviewedAt: timestamp('reviewed_at'),
-	notes: text('notes'), // Recruiter notes
+	notes: text('notes'),
+	interviewEligible: integer('interview_eligible').default(0).notNull(),
+	interviewScheduledAt: timestamp('interview_scheduled_at'),
 });
 
 // Resumes table (for candidates to manage their resumes)
@@ -96,6 +107,51 @@ export const resumes = pgTable('resumes', {
 	thumbnailUrl: text('thumbnail_url').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Interviews table
+export const interviews = pgTable('interviews', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	applicationId: uuid('application_id')
+		.notNull()
+		.references(() => applications.id, { onDelete: 'cascade' })
+		.unique(),
+	status: interviewStatusEnum('status').notNull().default('scheduled'),
+	startedAt: timestamp('started_at'),
+	completedAt: timestamp('completed_at'),
+	duration: integer('duration'),
+	interviewSettings: text('interview_settings'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Interview messages table
+export const interviewMessages = pgTable('interview_messages', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	interviewId: uuid('interview_id')
+		.notNull()
+		.references(() => interviews.id, { onDelete: 'cascade' }),
+	role: messageRoleEnum('role').notNull(),
+	content: text('content').notNull(),
+	messageType: messageTypeEnum('message_type').notNull().default('text'),
+	mcqOptions: text('mcq_options'),
+	mcqAnswer: varchar('mcq_answer', { length: 10 }),
+	phase: interviewPhaseEnum('phase'),
+	questionIndex: integer('question_index'),
+	timestamp: timestamp('timestamp').defaultNow().notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Monitoring images table
+export const monitoringImages = pgTable('monitoring_images', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	interviewId: uuid('interview_id')
+		.notNull()
+		.references(() => interviews.id, { onDelete: 'cascade' }),
+	s3Key: text('s3_key').notNull(),
+	capturedAt: timestamp('captured_at').notNull(),
+	uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Relations
@@ -137,12 +193,39 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 		fields: [applications.resumeId],
 		references: [resumes.id],
 	}),
+	interview: one(interviews, {
+		fields: [applications.id],
+		references: [interviews.applicationId],
+	}),
 }));
 
 export const resumesRelations = relations(resumes, ({ one }) => ({
 	user: one(users, {
 		fields: [resumes.userId],
 		references: [users.id],
+	}),
+}));
+
+export const interviewsRelations = relations(interviews, ({ one, many }) => ({
+	application: one(applications, {
+		fields: [interviews.applicationId],
+		references: [applications.id],
+	}),
+	messages: many(interviewMessages),
+	monitoringImages: many(monitoringImages),
+}));
+
+export const interviewMessagesRelations = relations(interviewMessages, ({ one }) => ({
+	interview: one(interviews, {
+		fields: [interviewMessages.interviewId],
+		references: [interviews.id],
+	}),
+}));
+
+export const monitoringImagesRelations = relations(monitoringImages, ({ one }) => ({
+	interview: one(interviews, {
+		fields: [monitoringImages.interviewId],
+		references: [interviews.id],
 	}),
 }));
 
@@ -157,3 +240,9 @@ export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
+export type Interview = typeof interviews.$inferSelect;
+export type NewInterview = typeof interviews.$inferInsert;
+export type InterviewMessage = typeof interviewMessages.$inferSelect;
+export type NewInterviewMessage = typeof interviewMessages.$inferInsert;
+export type MonitoringImage = typeof monitoringImages.$inferSelect;
+export type NewMonitoringImage = typeof monitoringImages.$inferInsert;

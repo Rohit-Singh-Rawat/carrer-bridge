@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { EB_Garamond, Geist, Geist_Mono, Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { TRPCProvider } from "@/lib/trpc/provider";
 
 import "./globals.css";
 
@@ -43,8 +44,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} ${geistMono.variable} ${outfit.variable} ${ebGaramond.variable} 	antialiased`}
       >
-        {children}
-        <Toaster richColors position="top-center" />
+        <TRPCProvider>
+          {children}
+          <Toaster richColors position="top-center" />
+        </TRPCProvider>
       </body>
     </html>
   );

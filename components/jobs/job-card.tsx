@@ -29,9 +29,10 @@ interface JobCardProps {
 	};
 	isRecruiter?: boolean;
 	applicationCount?: number;
+	userApplication?: any;
 }
 
-export function JobCard({ job, isRecruiter = false, applicationCount = 0 }: JobCardProps) {
+export function JobCard({ job, isRecruiter = false, applicationCount = 0, userApplication }: JobCardProps) {
 	const [isActive, setIsActive] = useState(job.status === 'active');
 	const [isUpdating, setIsUpdating] = useState(false);
 
@@ -118,6 +119,30 @@ export function JobCard({ job, isRecruiter = false, applicationCount = 0 }: JobC
 			month: 'short',
 			day: 'numeric',
 		});
+	};
+
+	const getStatusColor = (status: string) => {
+		switch (status) {
+			case 'pending':
+				return 'bg-amber-50 text-amber-700 border-amber-200';
+			case 'reviewed':
+				return 'bg-blue-50 text-blue-700 border-blue-200';
+			case 'in_progress':
+				return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+			case 'accepted':
+				return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+			case 'rejected':
+				return 'bg-red-50 text-red-700 border-red-200';
+			default:
+				return 'bg-muted text-muted-foreground';
+		}
+	};
+
+	const formatStatus = (status: string) => {
+		return status
+			.split('_')
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
 	};
 
 	return (
@@ -250,6 +275,32 @@ export function JobCard({ job, isRecruiter = false, applicationCount = 0 }: JobC
 					</div>
 				)}
 			</Link>
+
+			{/* Candidate Application Status */}
+			{!isRecruiter && userApplication && (
+				<div className='mt-5 pt-5 border-t border-border/50'>
+					<div className='flex items-center justify-between'>
+						<span className="text-sm font-['outfit'] text-muted-foreground">Your Application</span>
+						<Badge
+							variant='outline'
+							className={cn(getStatusColor(userApplication.status), "font-['outfit'] text-xs border")}
+						>
+							{formatStatus(userApplication.status)}
+						</Badge>
+					</div>
+					{userApplication.interviewEligible === 1 && userApplication.status === 'reviewed' && (
+						<div className='mt-3'>
+							<Link
+								href={`/interview/${userApplication.id}`}
+								onClick={(e) => e.stopPropagation()}
+								className='flex items-center justify-center px-4 py-2 rounded-lg bg-ocean-wave hover:bg-deep-sea text-white transition-colors font-["outfit"] text-sm font-medium'
+							>
+								Start Interview
+							</Link>
+						</div>
+					)}
+				</div>
+			)}
 
 			{/* Recruiter Controls */}
 			{isRecruiter && (

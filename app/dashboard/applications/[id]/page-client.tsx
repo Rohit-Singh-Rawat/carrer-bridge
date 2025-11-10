@@ -166,6 +166,50 @@ export function ApplicationDetailClient({
 						</div>
 					</div>
 				)}
+
+				{/* Interview Section (User View) - Moved to top */}
+				{!isRecruiter && application.interviewEligible === 1 && (
+					<>
+						<Separator />
+						<div className='space-y-4'>
+							<div className='flex items-center gap-2'>
+								<div className='h-2 w-2 rounded-full bg-emerald-500 animate-pulse' />
+								<h3 className="text-lg font-['outfit'] font-medium">Interview Available</h3>
+							</div>
+							<p className="text-sm text-muted-foreground font-['outfit']">
+								Your application has been reviewed and you're now eligible for an AI-powered interview.
+							</p>
+							<Button
+								asChild
+								size='lg'
+								className="w-full font-['outfit']"
+							>
+								<Link href={`/interview/${application.id}`}>Start Interview</Link>
+							</Button>
+						</div>
+					</>
+				)}
+
+				{/* Interview Section (Recruiter View) - Moved to top */}
+				{isRecruiter && application.interviewEligible === 1 && (
+					<>
+						<Separator />
+						<div className='space-y-4'>
+							<h3 className="text-lg font-['outfit'] font-medium">AI Interview</h3>
+							<p className="text-sm text-muted-foreground font-['outfit']">
+								The candidate has been invited to complete an AI-powered interview.
+							</p>
+							<Button
+								asChild
+								className="font-['outfit']"
+							>
+								<Link href={`/dashboard/applications/${application.id}/interview`}>
+									View Interview
+								</Link>
+							</Button>
+						</div>
+					</>
+				)}
 			</div>
 
 			<Separator />

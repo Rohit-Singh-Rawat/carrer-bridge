@@ -273,6 +273,11 @@ export async function updateApplicationStatus(
 			updateData.reviewedAt = new Date();
 		}
 
+		if (status === 'reviewed') {
+			updateData.interviewEligible = 1;
+			updateData.interviewScheduledAt = new Date();
+		}
+
 		const [updatedApplication] = await db
 			.update(applications)
 			.set(updateData)

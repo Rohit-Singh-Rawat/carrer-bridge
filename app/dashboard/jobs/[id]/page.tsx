@@ -19,6 +19,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { JobActions } from '@/components/jobs/job-actions';
 import { ApplyToJobDialog } from '@/components/jobs/apply-to-job-dialog';
+import { JobApplicationStatus } from '@/components/jobs/job-application-status';
+import { db } from '@/db';
+import { applications } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 interface JobDetailPageProps {
 	params: Promise<{ id: string }>;
@@ -43,11 +47,17 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
 	// Get user's resumes if they're a candidate
 	let userResumes: any[] = [];
+	let userApplication = null;
 	if (user.role === 'user' && !isOwner) {
 		const resumesResult = await getUserResumes();
 		if (resumesResult.success && resumesResult.resumes) {
 			userResumes = resumesResult.resumes;
 		}
+
+		// Check if user has already applied to this job
+		userApplication = await db.query.applications.findFirst({
+			where: and(eq(applications.jobId, id), eq(applications.userId, user.id)),
+		});
 	}
 
 	const formatSalary = (min?: number | null, max?: number | null) => {
@@ -160,12 +170,20 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
 				{/* Action Buttons */}
 				{!isOwner && job.status === 'active' && (
-					<div className='flex gap-3'>
-						<ApplyToJobDialog
-							jobId={job.id}
-							jobTitle={job.title}
-							resumes={userResumes}
-						/>
+					<div className='max-w-md'>
+						{!userApplication ? (
+							<ApplyToJobDialog
+								jobId={job.id}
+								jobTitle={job.title}
+								resumes={userResumes}
+							/>
+						) : (
+							<JobApplicationStatus
+								application={userApplication}
+								jobId={job.id}
+								showInterviewButton={true}
+							/>
+						)}
 					</div>
 				)}
 				{isOwner && (

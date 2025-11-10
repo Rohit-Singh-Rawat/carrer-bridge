@@ -4,6 +4,9 @@ import { getJobApplicationCount } from '@/actions/applications';
 import { CreateJobDialog } from '@/components/jobs/create-job-dialog';
 import { EmptyJobsState } from '@/components/jobs/empty-jobs-state';
 import { JobCard } from '@/components/jobs/job-card';
+import { db } from '@/db';
+import { applications } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export default async function JobsPage() {
 	const user = await getCurrentUser();
@@ -21,6 +24,17 @@ export default async function JobsPage() {
 		const counts = await Promise.all(jobs.map((job) => getJobApplicationCount(job.id)));
 		jobs.forEach((job, index) => {
 			applicationCounts[job.id] = counts[index];
+		});
+	}
+
+	// Get user applications for candidates
+	let userApplications: Record<string, any> = {};
+	if (user.role === 'user' && jobs.length > 0) {
+		const allApplications = await db.query.applications.findMany({
+			where: eq(applications.userId, user.id),
+		});
+		allApplications.forEach((app) => {
+			userApplications[app.jobId] = app;
 		});
 	}
 
@@ -56,6 +70,7 @@ export default async function JobsPage() {
 								job={job}
 								isRecruiter={user.role === 'recruiter'}
 								applicationCount={applicationCounts[job.id] || 0}
+								userApplication={userApplications[job.id]}
 							/>
 						))}
 					</div>
