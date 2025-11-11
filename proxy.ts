@@ -1,11 +1,11 @@
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { COOKIE_NAMES } from "@/lib/constants";
 
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback-secret-key",
 );
-const TOKEN_NAME = "auth-token";
 
 // Routes that require authentication
 const protectedRoutes = ["/dashboard"];
@@ -14,7 +14,7 @@ const protectedRoutes = ["/dashboard"];
 const authRoutes = ["/login", "/register"];
 
 export async function proxy(request: NextRequest) {
-  const token = request.cookies.get(TOKEN_NAME)?.value;
+  const token = request.cookies.get(COOKIE_NAMES.AUTH_TOKEN)?.value;
   const { pathname } = request.nextUrl;
 
   // Check if route is protected
@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
     } catch (_error) {
       // Token is invalid, remove it
       const response = NextResponse.next();
-      response.cookies.delete(TOKEN_NAME);
+      response.cookies.delete(COOKIE_NAMES.AUTH_TOKEN);
     }
   }
 

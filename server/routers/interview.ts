@@ -12,6 +12,7 @@ import {
 	type InterviewMessage,
 	type MonitoringImage,
 } from '@/db/schema';
+import { createNotification } from '@/actions/notifications';
 
 export const interviewRouter = router({
 	getByApplicationId: protectedProcedure
@@ -267,32 +268,65 @@ export const interviewRouter = router({
 				});
 			}
 
-			const completedAt = new Date();
-			const duration = interview.startedAt
-				? Math.floor((completedAt.getTime() - interview.startedAt.getTime()) / 1000)
-				: 0;
+		const completedAt = new Date();
+		const duration = interview.startedAt
+			? Math.floor((completedAt.getTime() - interview.startedAt.getTime()) / 1000)
+			: 0;
 
-			await db
-				.update(interviews)
-				.set({
-					status: 'completed',
-					completedAt,
-					duration,
-				})
-				.where(eq(interviews.id, input.interviewId));
-
-			await db
-				.update(applications)
-				.set({
-					status: 'in_progress',
-				})
-				.where(eq(applications.id, interview.applicationId));
-
-			return {
+		await db
+			.update(interviews)
+			.set({
+				status: 'completed',
+				completedAt,
 				duration,
-				questionsAnswered: interview.messages.filter((m) => m.role === 'user').length,
-				mcqCount: interview.messages.filter((m) => m.messageType === 'mcq').length,
-			};
+			})
+			.where(eq(interviews.id, input.interviewId));
+
+		await db
+			.update(applications)
+			.set({
+				status: 'in_progress',
+			})
+			.where(eq(applications.id, interview.applicationId));
+
+		// Get job details for notification
+		const applicationWithJob = await db.query.applications.findFirst({
+			where: eq(applications.id, interview.applicationId),
+			with: {
+				job: {
+					with: {
+						recruiter: {
+							with: {
+								recruiterProfile: true,
+							},
+						},
+					},
+				},
+			},
+		});
+
+		// Notify user about interview completion
+		if (applicationWithJob) {
+			await createNotification({
+				userId: interview.application.userId,
+				type: 'interview_completed',
+				title: 'Interview Completed',
+				message: `You completed the interview for ${applicationWithJob.job.title}`,
+				data: {
+					applicationId: interview.applicationId,
+					jobId: applicationWithJob.jobId,
+					jobTitle: applicationWithJob.job.title,
+					interviewId: interview.id,
+					companyName: applicationWithJob.job.recruiter.recruiterProfile?.companyName,
+				},
+			});
+		}
+
+		return {
+			duration,
+			questionsAnswered: interview.messages.filter((m) => m.role === 'user').length,
+			mcqCount: interview.messages.filter((m) => m.messageType === 'mcq').length,
+		};
 		}),
 
 	saveMessage: protectedProcedure

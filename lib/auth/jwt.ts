@@ -1,8 +1,8 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
+import { COOKIE_NAMES } from '@/lib/constants';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key');
-const TOKEN_NAME = 'auth-token';
 const TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export interface JWTPayload {
@@ -43,7 +43,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
  */
 export async function setAuthCookie(token: string) {
 	const cookieStore = await cookies();
-	cookieStore.set(TOKEN_NAME, token, {
+	cookieStore.set(COOKIE_NAMES.AUTH_TOKEN, token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'lax',
@@ -57,7 +57,7 @@ export async function setAuthCookie(token: string) {
  */
 export async function getAuthToken(): Promise<string | null> {
 	const cookieStore = await cookies();
-	const cookie = cookieStore.get(TOKEN_NAME);
+	const cookie = cookieStore.get(COOKIE_NAMES.AUTH_TOKEN);
 	return cookie?.value || null;
 }
 
@@ -66,7 +66,7 @@ export async function getAuthToken(): Promise<string | null> {
  */
 export async function removeAuthCookie() {
 	const cookieStore = await cookies();
-	cookieStore.delete(TOKEN_NAME);
+	cookieStore.delete(COOKIE_NAMES.AUTH_TOKEN);
 }
 
 /**

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { applications, type Application } from '@/db/schema';
 import { getCurrentUserFromToken } from '@/lib/auth/jwt';
+import { createNotification } from './notifications';
 
 interface ApplicationResponse {
 	success: boolean;
@@ -41,6 +42,23 @@ export async function createApplication(
 			};
 		}
 
+		// Get job details for notification
+		const job = await db.query.jobs.findFirst({
+			where: (jobs, { eq }) => eq(jobs.id, jobId),
+			with: {
+				recruiter: {
+					with: {
+						recruiterProfile: true,
+					},
+				},
+			},
+		});
+
+		// Get applicant details
+		const applicant = await db.query.users.findFirst({
+			where: (users, { eq }) => eq(users.id, user.userId),
+		});
+
 		// Create application
 		const [newApplication] = await db
 			.insert(applications)
@@ -51,6 +69,23 @@ export async function createApplication(
 				status: 'pending',
 			})
 			.returning();
+
+		// Notify recruiter of new application
+		if (job && applicant) {
+			await createNotification({
+				userId: job.recruiterId,
+				type: 'application_submitted',
+				title: 'New Application',
+				message: `${applicant.fullName} applied for ${job.title}`,
+				data: {
+					applicationId: newApplication.id,
+					jobId: job.id,
+					jobTitle: job.title,
+					applicantName: applicant.fullName,
+					companyName: job.recruiter.recruiterProfile?.companyName,
+				},
+			});
+		}
 
 		revalidatePath('/dashboard/applications');
 		revalidatePath(`/dashboard/jobs/${jobId}`);
@@ -241,7 +276,15 @@ export async function updateApplicationStatus(
 		const application = await db.query.applications.findFirst({
 			where: eq(applications.id, applicationId),
 			with: {
-				job: true,
+				job: {
+					with: {
+						recruiter: {
+							with: {
+								recruiterProfile: true,
+							},
+						},
+					},
+				},
 			},
 		});
 
@@ -259,6 +302,8 @@ export async function updateApplicationStatus(
 				message: 'Unauthorized to update this application',
 			};
 		}
+
+		const oldStatus = application.status;
 
 		// Update application
 		const updateData: any = {
@@ -283,6 +328,40 @@ export async function updateApplicationStatus(
 			.set(updateData)
 			.where(eq(applications.id, applicationId))
 			.returning();
+
+		// Notify applicant of status change
+		if (oldStatus !== status) {
+			await createNotification({
+				userId: application.userId,
+				type: 'application_status_changed',
+				title: 'Application Status Updated',
+				message: `Your application for ${application.job.title} is now ${status.replace('_', ' ')}`,
+				data: {
+					applicationId: application.id,
+					jobId: application.job.id,
+					jobTitle: application.job.title,
+					oldStatus,
+					newStatus: status,
+					companyName: application.job.recruiter.recruiterProfile?.companyName,
+				},
+			});
+
+			// Notify about interview scheduling
+			if (status === 'reviewed') {
+				await createNotification({
+					userId: application.userId,
+					type: 'interview_scheduled',
+					title: 'Interview Scheduled',
+					message: `Your interview for ${application.job.title} has been scheduled`,
+					data: {
+						applicationId: application.id,
+						jobId: application.job.id,
+						jobTitle: application.job.title,
+						companyName: application.job.recruiter.recruiterProfile?.companyName,
+					},
+				});
+			}
+		}
 
 		revalidatePath(`/dashboard/jobs/${application.jobId}/applications`);
 		revalidatePath(`/dashboard/applications/${applicationId}`);

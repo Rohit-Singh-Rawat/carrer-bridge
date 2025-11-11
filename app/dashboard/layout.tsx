@@ -4,6 +4,7 @@ import { logout, requireAuth } from '@/actions/auth';
 import Logo from '@/components/career-bridge/logo';
 import { DashboardBreadcrumb } from '@/components/dashboard/dashboard-breadcrumb';
 import { DashboardSidebarContent } from '@/components/dashboard/dashboard-sidebar-content';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -56,6 +57,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 				</SidebarContent>
 				<SidebarFooter className='border-t border-primary-foreground/20 bg-primary'>
 					<SidebarMenu>
+						<SidebarMenuItem>
+							<NotificationBell />
+						</SidebarMenuItem>
 						<SidebarMenuItem>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>

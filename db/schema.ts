@@ -22,6 +22,13 @@ export const interviewStatusEnum = pgEnum('interview_status', [
 export const messageRoleEnum = pgEnum('message_role', ['user', 'assistant']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'mcq']);
 export const interviewPhaseEnum = pgEnum('interview_phase', ['introduction', 'questions', 'closing']);
+export const notificationTypeEnum = pgEnum('notification_type', [
+	'application_submitted',
+	'application_status_changed',
+	'interview_scheduled',
+	'interview_status_changed',
+	'interview_completed',
+]);
 
 // Users table (for both regular users and recruiters)
 export const users = pgTable('users', {
@@ -154,6 +161,20 @@ export const monitoringImages = pgTable('monitoring_images', {
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Notifications table
+export const notifications = pgTable('notifications', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	type: notificationTypeEnum('type').notNull(),
+	title: varchar('title', { length: 255 }).notNull(),
+	message: text('message').notNull(),
+	data: text('data'),
+	read: integer('read').default(0).notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
 	recruiterProfile: one(recruiterProfiles, {
@@ -163,6 +184,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 	jobs: many(jobs),
 	applications: many(applications),
 	resumes: many(resumes),
+	notifications: many(notifications),
 }));
 
 export const recruiterProfilesRelations = relations(recruiterProfiles, ({ one }) => ({
@@ -229,6 +251,13 @@ export const monitoringImagesRelations = relations(monitoringImages, ({ one }) =
 	}),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+	user: one(users, {
+		fields: [notifications.userId],
+		references: [users.id],
+	}),
+}));
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -246,3 +275,5 @@ export type InterviewMessage = typeof interviewMessages.$inferSelect;
 export type NewInterviewMessage = typeof interviewMessages.$inferInsert;
 export type MonitoringImage = typeof monitoringImages.$inferSelect;
 export type NewMonitoringImage = typeof monitoringImages.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

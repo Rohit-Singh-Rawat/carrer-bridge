@@ -8,6 +8,13 @@
       "when": 1759728792578,
       "tag": "0000_deep_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763034512864,
+      "tag": "0001_broken_gressill",
+      "breakpoints": true
     }
   ]
 }
