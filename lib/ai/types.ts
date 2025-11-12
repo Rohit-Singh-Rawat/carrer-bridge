@@ -8,6 +8,7 @@ export interface MCQOption {
 export interface MCQQuestion {
 	question: string;
 	options: MCQOption[];
+	correctOption?: string;
 }
 
 export interface AIMessage {

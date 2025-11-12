@@ -1,84 +1,86 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { MCQOption } from '@/types/interview';
 
 interface MCQQuestionProps {
-	question: string;
-	options: MCQOption[];
-	onSelect: (optionId: string) => void;
-	disabled?: boolean;
+  question: string;
+  options: Array<{ id: string; text: string }>;
+  onAnswer: (optionId: string) => void;
+  disabled?: boolean;
 }
 
-export function MCQQuestion({ question, options, onSelect, disabled = false }: MCQQuestionProps) {
-	const [selectedOption, setSelectedOption] = useState<string | null>(null);
+export function MCQQuestion({ question, options, onAnswer, disabled = false }: MCQQuestionProps) {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-	useEffect(() => {
-		const handleKeyPress = (e: KeyboardEvent) => {
-			if (disabled || selectedOption) return;
+  const handleSelect = (optionId: string) => {
+    if (disabled) return;
+    setSelectedOption(optionId);
+  };
 
-			const key = e.key.toLowerCase();
-			if (['1', '2', '3', '4'].includes(key)) {
-				const optionIndex = Number.parseInt(key) - 1;
-				if (options[optionIndex]) {
-					setSelectedOption(options[optionIndex].id);
-				}
-			} else if (['a', 'b', 'c', 'd'].includes(key)) {
-				const option = options.find((opt) => opt.id === key);
-				if (option) {
-					setSelectedOption(option.id);
-				}
-			}
-		};
+  const handleSubmit = () => {
+    if (!selectedOption || disabled) return;
+    onAnswer(selectedOption);
+  };
 
-		window.addEventListener('keydown', handleKeyPress);
-		return () => window.removeEventListener('keydown', handleKeyPress);
-	}, [disabled, selectedOption, options]);
+  return (
+    <div className="p-4 bg-card/50 border border-border rounded-lg backdrop-blur-sm">
+      <p className="text-sm font-medium text-foreground mb-3 leading-snug">{question}</p>
+      
+      <div className="space-y-2">
+        {options.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => handleSelect(option.id)}
+            disabled={disabled}
+            className={cn(
+              'w-full text-left px-3 py-2.5 rounded-md border transition-all duration-150',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'flex items-center gap-2.5 group',
+              selectedOption === option.id
+                ? 'border-primary bg-primary/5 shadow-sm'
+                : 'border-border/50 bg-background/50 hover:border-primary/40 hover:bg-accent/30'
+            )}
+          >
+            <div
+              className={cn(
+                'w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                selectedOption === option.id
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground/30 group-hover:border-primary/40'
+              )}
+            >
+              {selectedOption === option.id && (
+                <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />
+              )}
+            </div>
+            
+            <span className={cn(
+              "text-xs font-semibold px-1.5 py-0.5 rounded min-w-[20px] text-center flex-shrink-0",
+              selectedOption === option.id
+                ? "bg-primary/20 text-primary"
+                : "bg-muted/60 text-muted-foreground"
+            )}>
+              {option.id}
+            </span>
+            
+            <span className="text-sm text-foreground/90">{option.text}</span>
+          </button>
+        ))}
+      </div>
 
-	const handleSubmit = () => {
-		if (selectedOption && !disabled) {
-			onSelect(selectedOption);
-		}
-	};
-
-	return (
-		<div className='space-y-4 p-6 rounded-xl border bg-card'>
-			<h3 className="font-['outfit'] text-lg font-medium">{question}</h3>
-
-			<div className='space-y-2'>
-				{options.map((option, index) => (
-					<button
-						key={option.id}
-						type='button'
-						onClick={() => !disabled && setSelectedOption(option.id)}
-						disabled={disabled}
-						className={cn(
-							"w-full text-left p-4 rounded-lg border-2 transition-all font-['outfit']",
-							'hover:border-ocean-wave hover:bg-ocean-wave/5',
-							selectedOption === option.id
-								? 'border-ocean-wave bg-ocean-wave/10'
-								: 'border-border bg-background',
-							disabled && 'opacity-50 cursor-not-allowed'
-						)}
-					>
-						<span className='font-medium'>{option.id.toUpperCase()}.</span> {option.text}
-						<span className='text-xs text-muted-foreground ml-2'>(Press {index + 1})</span>
-					</button>
-				))}
-			</div>
-
-			{selectedOption && (
-				<Button
-					onClick={handleSubmit}
-					disabled={disabled}
-					className="w-full font-['outfit']"
-				>
-					Submit Answer
-				</Button>
-			)}
-		</div>
-	);
+      <Button
+        onClick={handleSubmit}
+        disabled={!selectedOption || disabled}
+        className="w-full mt-3 h-9"
+        size="sm"
+      >
+        {selectedOption ? 'Submit' : 'Select an option'}
+      </Button>
+    </div>
+  );
 }
-

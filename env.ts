@@ -28,7 +28,8 @@ export const env = createEnv({
 	client: {
 		NEXT_PUBLIC_APP_URL: z.string().url(),
 		NEXT_PUBLIC_R2_URL: z.string().url(),
-		NEXT_PUBLIC_INTERVIEW_MAX_DURATION: z.string().default('300'),
+		NEXT_PUBLIC_INTERVIEW_MAX_DURATION: z.string().default('1800'),
+		NEXT_PUBLIC_INTERVIEW_TOTAL_QUESTIONS: z.string().default('8'),
 		NEXT_PUBLIC_SNAPSHOT_INTERVAL: z.string().default('10'),
 	},
 
@@ -51,6 +52,7 @@ export const env = createEnv({
 		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 		NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
 		NEXT_PUBLIC_INTERVIEW_MAX_DURATION: process.env.NEXT_PUBLIC_INTERVIEW_MAX_DURATION,
+		NEXT_PUBLIC_INTERVIEW_TOTAL_QUESTIONS: process.env.NEXT_PUBLIC_INTERVIEW_TOTAL_QUESTIONS,
 		NEXT_PUBLIC_SNAPSHOT_INTERVAL: process.env.NEXT_PUBLIC_SNAPSHOT_INTERVAL,
 	},
 

@@ -1,136 +1,132 @@
-'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { CameraDevice, MediaStreamError } from '@/types/interview';
+/**
+ * Custom hook to manage media stream (camera and audio)
+ * Handles initialization, device switching, and stream cleanup
+ */
+export const useMediaStream = (isInterviewStarted: boolean) => {
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
 
-export function useMediaStream() {
-	const [stream, setStream] = useState<MediaStream | null>(null);
-	const [devices, setDevices] = useState<CameraDevice[]>([]);
-	const [selectedVideoDevice, setSelectedVideoDevice] = useState<string>('');
-	const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>('');
-	const [error, setError] = useState<MediaStreamError | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const streamRef = useRef<MediaStream | null>(null);
+  // Initialize media stream when interview starts
+  useEffect(() => {
+    if (!isInterviewStarted) return;
 
-	const enumerateDevices = useCallback(async () => {
-		try {
-			const deviceList = await navigator.mediaDevices.enumerateDevices();
-			const videoDevices: CameraDevice[] = deviceList
-				.filter((device) => device.kind === 'videoinput')
-				.map((device) => ({
-					deviceId: device.deviceId,
-					label: device.label || `Camera ${device.deviceId.substring(0, 5)}`,
-					kind: 'videoinput',
-				}));
+    const initializeMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        setMediaStream(stream);
+        console.log('Media stream initialized');
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+      }
+    };
 
-			const audioDevices: CameraDevice[] = deviceList
-				.filter((device) => device.kind === 'audioinput')
-				.map((device) => ({
-					deviceId: device.deviceId,
-					label: device.label || `Microphone ${device.deviceId.substring(0, 5)}`,
-					kind: 'audioinput',
-				}));
+    initializeMedia();
 
-			setDevices([...videoDevices, ...audioDevices]);
+    // Cleanup function - stop all tracks when component unmounts
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInterviewStarted]);
 
-			if (videoDevices.length > 0 && !selectedVideoDevice) {
-				setSelectedVideoDevice(videoDevices[0].deviceId);
-			}
-			if (audioDevices.length > 0 && !selectedAudioDevice) {
-				setSelectedAudioDevice(audioDevices[0].deviceId);
-			}
-		} catch (err) {
-			console.error('Error enumerating devices:', err);
-		}
-	}, [selectedVideoDevice, selectedAudioDevice]);
+  // Toggle microphone mute/unmute
+  const toggleMute = useCallback(() => {
+    if (mediaStream) {
+      const audioTrack = mediaStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+        console.log('Audio toggled:', !audioTrack.enabled ? 'MUTED' : 'UNMUTED');
+      }
+    }
+  }, [mediaStream]);
 
-	const requestStream = useCallback(
-		async (videoDeviceId?: string, audioDeviceId?: string) => {
-			setIsLoading(true);
-			setError(null);
+  // Toggle camera on/off
+  const toggleCamera = useCallback(async () => {
+    if (mediaStream) {
+      if (isCameraOff) {
+        // Camera is off, turn it on by creating new stream
+        try {
+          const newStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
 
-			try {
-				if (streamRef.current) {
-					streamRef.current.getTracks().forEach((track) => track.stop());
-				}
+          // Stop old stream and replace with new one
+          mediaStream.getTracks().forEach((track) => track.stop());
+          setMediaStream(newStream);
+          setIsCameraOff(false);
+          console.log('Camera turned ON with new stream');
+        } catch (error) {
+          console.error('Error turning camera on:', error);
+        }
+      } else {
+        // Camera is on, turn it off
+        const videoTrack = mediaStream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.enabled = false;
+          setIsCameraOff(true);
+          console.log('Camera turned OFF');
+        }
+      }
+    }
+  }, [mediaStream, isCameraOff]);
 
-				const constraints: MediaStreamConstraints = {
-					video: {
-						deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
-						width: { ideal: 1280 },
-						height: { ideal: 720 },
-						facingMode: 'user',
-					},
-					audio: {
-						deviceId: audioDeviceId ? { exact: audioDeviceId } : undefined,
-						echoCancellation: true,
-						noiseSuppression: true,
-						autoGainControl: true,
-					},
-				};
+  // Change camera or microphone device
+  const handleDeviceChange = useCallback(
+    async (deviceId: string, kind: string) => {
+      try {
+        console.log('Changing device:', deviceId, kind);
 
-				const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-				streamRef.current = mediaStream;
-				setStream(mediaStream);
+        if (!mediaStream) return;
 
-				await enumerateDevices();
-			} catch (err: any) {
-				const error: MediaStreamError = {
-					name: err.name || 'MediaStreamError',
-					message: err.message || 'Failed to access camera/microphone',
-					constraint: err.constraint,
-				};
-				setError(error);
-				console.error('Error requesting media stream:', err);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[enumerateDevices]
-	);
+        const constraints: MediaStreamConstraints = {};
 
-	const selectVideoDevice = useCallback(
-		(deviceId: string) => {
-			setSelectedVideoDevice(deviceId);
-			requestStream(deviceId, selectedAudioDevice);
-		},
-		[selectedAudioDevice, requestStream]
-	);
+        // Set constraints based on device type
+        if (kind === 'videoinput') {
+          constraints.video = { deviceId: { exact: deviceId } };
+          constraints.audio = true;
+        } else if (kind === 'audioinput') {
+          constraints.audio = { deviceId: { exact: deviceId } };
+          constraints.video = true;
+        }
 
-	const selectAudioDevice = useCallback(
-		(deviceId: string) => {
-			setSelectedAudioDevice(deviceId);
-			requestStream(selectedVideoDevice, deviceId);
-		},
-		[selectedVideoDevice, requestStream]
-	);
+        // Stop current tracks and get new stream with selected device
+        mediaStream.getTracks().forEach((track) => track.stop());
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+        setMediaStream(newStream);
 
-	const stopStream = useCallback(() => {
-		if (streamRef.current) {
-			streamRef.current.getTracks().forEach((track) => track.stop());
-			streamRef.current = null;
-			setStream(null);
-		}
-	}, []);
+        console.log('Device changed successfully to:', deviceId);
+      } catch (error) {
+        console.error('Error changing device:', error);
+      }
+    },
+    [mediaStream]
+  );
 
-	useEffect(() => {
-		return () => {
-			stopStream();
-		};
-	}, [stopStream]);
+  // Stop all media streams (cleanup)
+  const stopMediaStream = useCallback(() => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => track.stop());
+      setMediaStream(null);
+    }
+  }, [mediaStream]);
 
-	return {
-		stream,
-		devices,
-		selectedVideoDevice,
-		selectedAudioDevice,
-		error,
-		isLoading,
-		requestStream,
-		selectVideoDevice,
-		selectAudioDevice,
-		stopStream,
-		enumerateDevices,
-	};
-}
-
+  return {
+    mediaStream,
+    isMuted,
+    isCameraOff,
+    toggleMute,
+    toggleCamera,
+    handleDeviceChange,
+    stopMediaStream,
+  };
+};

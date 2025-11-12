@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { Download01Icon, Play01Icon, Pause01Icon, Image01Icon } from '@hugeicons/core-free-icons';
+import { Download01Icon, PlayCircleIcon, PauseCircleIcon, Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { env } from '@/env';
 import type { MonitoringImage } from '@/types/interview';
 
 interface MonitoringGalleryProps {
 	images: MonitoringImage[];
-}
+}	
 
 export function MonitoringGallery({ images }: MonitoringGalleryProps) {
 	const [selectedImage, setSelectedImage] = useState<MonitoringImage | null>(null);
@@ -94,7 +94,7 @@ export function MonitoringGallery({ images }: MonitoringGalleryProps) {
 						className="font-['outfit']"
 					>
 						<HugeiconsIcon
-							icon={isPlaying ? Pause01Icon : Play01Icon}
+							icon={isPlaying ? PauseCircleIcon : PlayCircleIcon}
 							className='size-4 mr-2'
 						/>
 						{isPlaying ? 'Pause' : 'Play'}
