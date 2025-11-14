@@ -145,7 +145,7 @@ export class TextToSpeechManager {
 			};
 
 			console.log('Speaking text:', text.substring(0, 50) + '...');
-			this.synthesis.speak(utterance);
+			this.synthesis!.speak(utterance);
 		});
 	}
 

@@ -312,12 +312,10 @@ export function UploadResumeDialog({ open, onOpenChange, onSuccess }: UploadResu
 									<PaperclipIcon className='size-4 shrink-0 opacity-60' />
 									<div className='min-w-0 flex-1'>
 										<p className='truncate text-[13px] font-medium'>
-											{file.file instanceof File ? file.file.name : file.file.name}
+											{file.file instanceof File ? file.file.name : ''}
 										</p>
 										<p className='text-muted-foreground text-xs'>
-											{file.file instanceof File
-												? formatBytes(file.file.size)
-												: formatBytes(file.file.size)}
+											{file.file instanceof File ? formatBytes(file.file.size) : ''}
 										</p>
 									</div>
 								</div>
