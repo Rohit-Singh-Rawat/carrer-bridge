@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { isBrowserCompatible } from '@/lib/utils/interview';
-import { useMediaStream } from '@/hooks/use-media-stream';
 import {
 	Tick01Icon,
 	Alert01Icon,
@@ -17,26 +17,47 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 
 interface PreInterviewCheckProps {
-	onStart: () => void;
+	uuid: string;
 }
 
-export function PreInterviewCheck({ onStart }: PreInterviewCheckProps) {
+export function PreInterviewCheck({ uuid }: PreInterviewCheckProps) {
+	const router = useRouter();
 	const [checks, setChecks] = useState({
 		browser: false,
 		camera: false,
 		microphone: false,
 	});
+	const [stream, setStream] = useState<MediaStream | null>(null);
+	const [error, setError] = useState<Error | null>(null);
 
-	const { stream, error, requestStream } = useMediaStream();
+	const handleStart = () => {
+		router.push(`/interview/${uuid}/session`);
+	};
 
 	useEffect(() => {
 		const browserCheck = isBrowserCompatible();
 		setChecks((prev) => ({ ...prev, browser: browserCheck.compatible }));
 
 		if (browserCheck.compatible) {
-			requestStream();
+			// Request media stream
+			navigator.mediaDevices
+				.getUserMedia({ video: true, audio: true })
+				.then((mediaStream) => {
+					setStream(mediaStream);
+				})
+				.catch((err) => {
+					setError(err);
+					console.error('Error accessing media devices:', err);
+				});
 		}
-	}, [requestStream]);
+
+		// Cleanup
+		return () => {
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		if (stream) {
@@ -158,7 +179,7 @@ export function PreInterviewCheck({ onStart }: PreInterviewCheckProps) {
 			</Card>
 
 			<Button
-				onClick={onStart}
+				onClick={handleStart}
 				disabled={!allChecksPass}
 				size='lg'
 				className="w-full font-['outfit'] text-lg h-14"

@@ -229,6 +229,51 @@ export async function generateAIInterviewResponseWithUuid(
 }
 
 /**
+ * Complete interview and update status
+ */
+export async function completeInterview(applicationUuid: string): Promise<{ success: boolean; error?: string }> {
+	try {
+		// Get interview by application ID
+		const interview = await db.query.interviews.findFirst({
+			where: eq(interviews.applicationId, applicationUuid),
+		});
+
+		if (!interview) {
+			return { success: false, error: 'Interview not found' };
+		}
+
+		// Calculate duration
+		const completedAt = new Date();
+		const duration = interview.startedAt
+			? Math.floor((completedAt.getTime() - interview.startedAt.getTime()) / 1000)
+			: 0;
+
+		// Update interview status to completed
+		await db
+			.update(interviews)
+			.set({
+				status: 'completed',
+				completedAt,
+				duration,
+			})
+			.where(eq(interviews.id, interview.id));
+
+		// Update application status
+		await db
+			.update(applications)
+			.set({
+				status: 'in_progress',
+			})
+			.where(eq(applications.id, applicationUuid));
+
+		return { success: true };
+	} catch (error) {
+		console.error('Error completing interview:', error);
+		return { success: false, error: 'Failed to complete interview' };
+	}
+}
+
+/**
  * Determine the next interview phase based on question index
  */
 function determineNextPhase(questionIndex: number, totalQuestions: number): InterviewPhase {

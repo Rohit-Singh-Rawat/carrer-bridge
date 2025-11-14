@@ -32,11 +32,13 @@ import {
 interface ApplicationDetailClientProps {
 	application: any;
 	isRecruiter: boolean;
+	hasCompletedInterview?: boolean;
 }
 
 export function ApplicationDetailClient({
 	application,
 	isRecruiter,
+	hasCompletedInterview = false,
 }: ApplicationDetailClientProps) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -172,20 +174,34 @@ export function ApplicationDetailClient({
 					<>
 						<Separator />
 						<div className='space-y-4'>
-							<div className='flex items-center gap-2'>
-								<div className='h-2 w-2 rounded-full bg-emerald-500 animate-pulse' />
-								<h3 className="text-lg font-['outfit'] font-medium">Interview Available</h3>
-							</div>
-							<p className="text-sm text-muted-foreground font-['outfit']">
-								Your application has been reviewed and you're now eligible for an AI-powered interview.
-							</p>
-							<Button
-								asChild
-								size='lg'
-								className="w-full font-['outfit']"
-							>
-								<Link href={`/interview/${application.id}`}>Start Interview</Link>
-							</Button>
+							{!hasCompletedInterview ? (
+								<>
+									<div className='flex items-center gap-2'>
+										<div className='h-2 w-2 rounded-full bg-emerald-500 animate-pulse' />
+										<h3 className="text-lg font-['outfit'] font-medium">Interview Available</h3>
+									</div>
+									<p className="text-sm text-muted-foreground font-['outfit']">
+										Your application has been reviewed and you're now eligible for an AI-powered interview.
+									</p>
+									<Button
+										asChild
+										size='lg'
+										className="w-full font-['outfit']"
+									>
+										<Link href={`/interview/${application.id}`}>Start Interview</Link>
+									</Button>
+								</>
+							) : (
+								<>
+									<div className='flex items-center gap-2'>
+										<div className='h-2 w-2 rounded-full bg-emerald-500' />
+										<h3 className="text-lg font-['outfit'] font-medium">Interview Completed</h3>
+									</div>
+									<p className="text-sm text-muted-foreground font-['outfit']">
+										You have successfully completed the AI interview. The recruiter will review your responses.
+									</p>
+								</>
+							)}
 						</div>
 					</>
 				)}

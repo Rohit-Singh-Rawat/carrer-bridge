@@ -7,9 +7,16 @@ import { Separator } from '@/components/ui/separator';
 import { TranscriptViewer } from '@/components/interview/transcript-viewer';
 import { MonitoringGallery } from '@/components/interview/monitoring-gallery';
 import { formatDuration } from '@/lib/utils/interview';
-import { ArrowLeft01Icon, ClockIcon, MessageIcon, Quiz01Icon, UserIcon } from '@hugeicons/core-free-icons';
+import {
+	ArrowLeft01Icon,
+	ClockIcon,
+	MessageIcon,
+	Quiz01Icon,
+	UserIcon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { Interview, InterviewMessage, MonitoringImage, Application } from '@/db/schema';
+import { useMemo } from 'react';
 
 interface InterviewReviewClientProps {
 	interview: Interview & {
@@ -25,6 +32,34 @@ interface InterviewReviewClientProps {
 export function InterviewReviewClient({ interview, application }: InterviewReviewClientProps) {
 	const userMessages = interview.messages.filter((m) => m.role === 'user');
 	const mcqMessages = interview.messages.filter((m) => m.messageType === 'mcq');
+
+	// Transform database messages to TranscriptViewer format
+	const formattedMessages = useMemo(() => {
+		return interview.messages.map((msg, index) => {
+			const message: any = {
+				id: index,
+				type: msg.role === 'user' ? 'user' : 'ai',
+				messageType: msg.messageType,
+				text: msg.content,
+				timestamp: new Date(msg.timestamp),
+			};
+
+			// Add MCQ data if message is MCQ
+			if (msg.messageType === 'mcq' && msg.mcqOptions) {
+				try {
+					const options = JSON.parse(msg.mcqOptions);
+					message.mcqData = {
+						question: msg.content,
+						options: Array.isArray(options) ? options : [],
+					};
+				} catch (e) {
+					console.error('Failed to parse MCQ options:', e);
+				}
+			}
+
+			return message;
+		});
+	}, [interview.messages]);
 
 	return (
 		<div className='space-y-6 pb-12'>
@@ -96,7 +131,9 @@ export function InterviewReviewClient({ interview, application }: InterviewRevie
 								/>
 								<span className="text-sm font-['outfit']">Snapshots</span>
 							</div>
-							<p className="text-2xl font-bold font-['outfit']">{interview.monitoringImages.length}</p>
+							<p className="text-2xl font-bold font-['outfit']">
+								{interview.monitoringImages.length}
+							</p>
 						</div>
 					</div>
 				</Card>
@@ -108,7 +145,7 @@ export function InterviewReviewClient({ interview, application }: InterviewRevie
 				<Card className='p-6'>
 					<h2 className="text-xl font-['outfit'] font-medium mb-4">Interview Transcript</h2>
 					<div className='h-[600px]'>
-						<TranscriptViewer messages={interview.messages} />
+						<TranscriptViewer messages={formattedMessages} />
 					</div>
 				</Card>
 
@@ -122,4 +159,3 @@ export function InterviewReviewClient({ interview, application }: InterviewRevie
 		</div>
 	);
 }
-

@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getCurrentUser } from '@/actions/auth';
 import { getApplicationById } from '@/actions/applications';
 import { PreInterviewCheck } from '@/components/interview/pre-interview-check';
+import { db } from '@/db';
+import { interviews } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 interface InterviewPageProps {
 	params: Promise<{ uuid: string }>;
@@ -16,7 +19,7 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
 	}
 
 	const { uuid } = await params;
-	
+
 	// Get application by uuid
 	const result = await getApplicationById(uuid);
 
@@ -36,10 +39,19 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
 		redirect(`/dashboard/applications/${uuid}`);
 	}
 
+	// Check if interview already exists and is completed
+	const existingInterview = await db.query.interviews.findFirst({
+		where: eq(interviews.applicationId, uuid),
+	});
+
+	if (existingInterview && existingInterview.status === 'completed') {
+		redirect(`/interview/${uuid}/complete`);
+	}
+
 	return (
-		<div className="container px-4 py-8 mx-auto relative">
-			<div className="max-w-3xl mx-auto relative z-10">
-				<Card className="mb-6 border-border shadow-lg">
+		<div className='container px-4 py-8 mx-auto relative'>
+			<div className='max-w-3xl mx-auto relative z-10'>
+				<Card className='mb-6 border-border shadow-lg'>
 					<CardHeader>
 						<h1 className="text-3xl font-bold font-['outfit']">
 							{application.job?.title || 'Position'} - AI Interview
@@ -50,12 +62,7 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
 						</p>
 					</CardHeader>
 					<CardContent>
-						<PreInterviewCheck
-							onStart={() => {
-								// Navigate to session on start
-								window.location.href = `/interview/${uuid}/session`;
-							}}
-						/>
+						<PreInterviewCheck uuid={uuid} />
 					</CardContent>
 				</Card>
 			</div>

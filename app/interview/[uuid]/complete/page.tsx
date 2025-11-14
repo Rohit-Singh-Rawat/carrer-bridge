@@ -1,38 +1,14 @@
-'use client';
-
-import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { CheckCircle, Home, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 
 interface InterviewCompletePageProps {
 	params: Promise<{ uuid: string }>;
 }
 
-export default function InterviewCompletePage({ params }: InterviewCompletePageProps) {
-	const { uuid } = use(params);
-	const router = useRouter();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-
-	useEffect(() => {
-		// Prevent accidental page reload
-		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			e.preventDefault();
-			e.returnValue = '';
-		};
-
-		window.addEventListener('beforeunload', handleBeforeUnload);
-		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-	}, []);
-
-	const handleViewApplication = () => {
-		router.push(`/dashboard/applications/${uuid}`);
-	};
-
-	const handleGoHome = () => {
-		router.push('/dashboard');
-	};
+export default async function InterviewCompletePage({ params }: InterviewCompletePageProps) {
+	const { uuid } = await params;
 
 	return (
 		<div className='h-screen flex items-center justify-center bg-background p-4'>
@@ -84,18 +60,22 @@ export default function InterviewCompletePage({ params }: InterviewCompletePageP
 					<div className='flex gap-3 pt-4'>
 						<Button
 							variant='outline'
-							onClick={handleViewApplication}
+							asChild
 							className='flex-1 gap-2'
 						>
-							<FileText className='w-4 h-4' />
-							View Application
+							<Link href={`/dashboard/applications/${uuid}`}>
+								<FileText className='w-4 h-4' />
+								View Application
+							</Link>
 						</Button>
 						<Button
-							onClick={handleGoHome}
+							asChild
 							className='flex-1 gap-2'
 						>
-							<Home className='w-4 h-4' />
-							Go to Dashboard
+							<Link href='/dashboard'>
+								<Home className='w-4 h-4' />
+								Go to Dashboard
+							</Link>
 						</Button>
 					</div>
 				</CardContent>

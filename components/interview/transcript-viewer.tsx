@@ -260,12 +260,14 @@ export function TranscriptViewer({
 			</div>
 
 			{/* Footer with status */}
-			<div className='p-4 border-t border-border bg-card'>
-				<div className='flex items-center justify-center gap-2.5 text-sm'>
-					<div className='w-2 h-2 bg-primary rounded-full animate-pulse' />
-					<span className='text-muted-foreground'>Live transcription active</span>
+			{(isAITyping || currentMCQ) && (
+				<div className='p-4 border-t border-border bg-card'>
+					<div className='flex items-center justify-center gap-2.5 text-sm'>
+						<div className='w-2 h-2 bg-primary rounded-full animate-pulse' />
+						<span className='text-muted-foreground'>Live transcription active</span>
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }

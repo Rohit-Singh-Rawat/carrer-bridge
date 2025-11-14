@@ -7,6 +7,9 @@ import { Camera, CameraOff, Mic, MicOff, Phone, Clock } from 'lucide-react';
 // Hooks
 import { useMediaStream, useSpeechRecognition, useSpeechPlayback } from '@/hooks';
 
+// Actions
+import { completeInterview } from '@/actions/ai-interview';
+
 // Components
 import { TranscriptViewer } from '@/components/interview/transcript-viewer';
 import { Button } from '@/components/ui/button';
@@ -120,10 +123,14 @@ export default function InterviewSessionPage({ params }: InterviewSessionPagePro
 		setIsStarted(true);
 	};
 
-	const handleEndInterview = useCallback(() => {
+	const handleEndInterview = useCallback(async () => {
 		stopRecognition();
 		stopMediaStream();
 		stopSpeech();
+		
+		// Mark interview as completed in database
+		await completeInterview(uuid);
+		
 		router.push(`/interview/${uuid}/complete`);
 	}, [stopRecognition, stopMediaStream, stopSpeech, router, uuid]);
 

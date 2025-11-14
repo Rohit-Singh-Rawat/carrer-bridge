@@ -24,7 +24,7 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
 		notFound();
 	}
 
-	if (result.application.job.recruiterId !== user.userId) {
+	if (result.application.job.recruiterId !== user.id) {
 		redirect('/dashboard');
 	}
 
@@ -39,6 +39,8 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
 			},
 		},
 	});
+
+	console.log('Interview data:', interview);
 
 	if (!interview || interview.status !== 'completed') {
 		return (
@@ -60,4 +62,3 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
 		/>
 	);
 }
-
